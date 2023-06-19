@@ -9,5 +9,8 @@
   },
   "dependencies": {
     "if-env": "^1.0.4"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.2"
   }
 }
