@@ -88,6 +88,7 @@ app.post("/signup", async (req, res) => {
       `INSERT INTO users (email, hashed_password) VALUES ($1, $2)`,
       [email, hashedPassword]
     );
+    // create a new token
     const token = jwt.sign({ email }, "secret", { expiresIn: "1hr" });
     // sends back email and token so we can pick it up from the frontend
     res.json({ email, token });
@@ -103,6 +104,26 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
+    const users = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    // if the user does not exist
+    if (!users.rows.length) return res.json({ detail: "User does not exist" });
+
+    //otherwise we compare the password with the hashed_password
+    const success = await bcrypt.compare(
+      password,
+      users.rows[0].hashed_password
+    );
+    // create a new token
+    const token = jwt.sign({ email }, "secret", { expiresIn: "1hr" });
+
+    // if the password matches after comparison
+    if (success) {
+      res.json({ email: users.rows[0].email, token });
+    } else {
+      res.json({ detail: "Login failed" });
+    }
   } catch (err) {
     console.error(err);
   }
